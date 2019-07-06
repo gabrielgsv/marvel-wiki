@@ -12,6 +12,7 @@ import Router from './Router'
 const useStyles = makeStyles({
 	root: {
 		flexGrow: 1,
+		margin: "20px",
 	},
 })
 
