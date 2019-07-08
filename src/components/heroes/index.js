@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import superagent from 'superagent'
-import paginate from 'paginate-array'
+import { useSelector, useDispatch } from "react-redux";
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
+import { paginationHeroes, nextPage, previusPage, paginationSearch } from '../../store/actions/pagination_heroes'
+import { Modal, Button, Input, Icon, Spin } from 'antd'
 
 import './index.css'
 
@@ -11,94 +11,103 @@ const useStyles = makeStyles(theme => ({
 	root: {
 		padding: theme.spacing(3, 2),
 		margin: "20px",
+		textAlign: 'end'
 	},
 	button: {
-    margin: theme.spacing(1),
-  },
-  input: {
-    display: 'none',
-  },
+		margin: theme.spacing(1),
+	},
+	input: {
+		display: 'none',
+	},
 }));
 
 export default function Heroes() {
-	const [pagination, setPagination] = useState({
-		heroes: [],
-		size: 10,
-		page: 1,
-		currPage: null
+	let paginationSelector = useSelector(
+		(state) => state.PaginationHeroes
+	)
+
+	let dispatch = useDispatch()
+	let getHeroes = () => dispatch(paginationHeroes())
+	let next = () => dispatch(nextPage())
+	let prev = () => dispatch(previusPage())
+	let searchHeroes = (value) => dispatch(paginationSearch(value))
+
+	const [modal, setModal] = useState({
+		visible: false,
+		hero: []
 	})
 
 	useEffect(() => {
-		superagent
-			.get('https://gateway.marvel.com:443/v1/public/characters')
-			.query({
-				ts: 1,
-				apikey: '1d82a60886ab3933e99bb422ed1946cc',
-				hash: '8a9257e658f2d2ccb08f9b271e1f6082'
-			})
-			.then(res => {
-				const result = res.body.data.results
-				console.log(result)
-
-				const curr = paginate(result, pagination.page, pagination.size);
-
-				setPagination({
-					...pagination,
-					heroes: result,
-					currPage: curr
-				})
-
-				console.log(pagination)
-			})
+		getHeroes()
 	}, [])
 
-	function previousPage() {
-		const { page, size, heroes } = pagination;
-
-		if (page > 1) {
-			const newPage = page - 1;
-			const newCurrPage = paginate(heroes, newPage, size);
-
-			setPagination({
-				...pagination,
-				page: newPage,
-				currPage: newCurrPage
-			})
-		}
+	function showModal(hero) {
+		setModal({
+			visible: true,
+			hero
+		})
 	}
 
-	function nextPage() {
-		const { currPage, page, size, heroes } = pagination
-
-		console.log(page);
-		if (page < currPage.totalPages) {
-			const newPage = page + 1;
-			const newCurrPage = paginate(heroes, newPage, size);
-			setPagination({
-				...pagination,
-				page: newPage,
-				currPage: newCurrPage
-			});
-		}
-	}
-
+	let { currPage, loading } = paginationSelector
 	const classes = useStyles()
-	const { page, size, currPage } = pagination
+	const { Search } = Input
+	const antIcon = <Icon type="loading" style={{ fontSize: 50 }} spin />
 	return (
-		<Paper className={classes.root}>
-			{currPage &&
-				<div className="grid">
-					{currPage.data.map(hero =>
-						<div className="item" key={hero.id}>
-							<p>{hero.name}</p>
-							<img src={`${hero.thumbnail.path}/portrait_fantastic.${hero.thumbnail.extension}`} />
-						</div>)}
+		<>
+			<Paper className={classes.root}>
+				<Search
+					className="search"
+					placeholder="Search a Hero"
+					style={{ width: 200 }}
+					enterButton
+					onSearch={value => {
+						if (value === '') {
+							getHeroes()
+						} else {
+							searchHeroes(value)
+						}
+					}}
+				/>
+				<div className="group">
+					<Spin indicator={antIcon} spinning={loading}>
+						{currPage &&
+							<>
+								<div className="grid">
+									{currPage.data.map(hero =>
+										<div className="item"
+											key={hero.id}
+											onClick={() => {
+												showModal(hero)
+												console.log(modal)
+											}}
+										>
+											<p className="name">{hero.name}</p>
+											<img src={`${hero.thumbnail.path}/portrait_fantastic.${hero.thumbnail.extension}`} />
+										</div>)}
+								</div>
+								<div className="group">
+									<Button type="primary" className={classes.button} onClick={() => prev()}>Back</Button>
+									<Button type="primary" className={classes.button} onClick={() => next()}>Next</Button>
+								</div>
+							</>
+						}
+					</Spin>
 				</div>
-			}
-			<div className="buttonGroup">
-				<Button variant="contained" className={classes.button} onClick={() => previousPage(pagination)}>Voltar</Button>
-				<Button variant="contained" className={classes.button} onClick={() => nextPage(pagination)}>Proximo</Button>
-			</div>
-		</Paper>
+			</Paper>
+			<Modal
+				visible={modal.visible}
+				onCancel={() => setModal({ visible: false, hero: [] })}
+				footer={[
+					<>
+						<Button onClick={() => setModal({ visible: false, hero: [] })}>
+							Exit
+						</Button>
+					</>
+				]}
+			>
+				<h2>{modal.hero.name}</h2>
+				<p>{modal.hero.description ? modal.hero.description : "Without description"}</p>
+			</Modal>
+		</>
 	)
 }

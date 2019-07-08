@@ -4,22 +4,33 @@
   justify-content: center;
 }
 
-.item {
-  width: 200px;
-  margin: 10px 30px;
-  text-align: center;
-  font-size: 13pt;
-  border: 1px solid #ccc;
-  padding: 0px 10px;
-  word-wrap: break-word;
+img {
   border-radius: 10px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
-img{
-  max-height: 230px;
+.name{
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.buttonGroup {
+.item {
+  width: 200px;
+  margin: 10px 50px;
   text-align: center;
+  font-size: 13pt;
+  border: 1px solid #ccc;
+  padding: 0px 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  height: 330px;
+}
+
+.group {
+  text-align: center;
+}
+
+.search {
+  max-width: 400px
 }
